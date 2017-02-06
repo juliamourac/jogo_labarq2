@@ -10,23 +10,20 @@ xmax = 50
 ymin = 0
 ymax = 15
 
-;player  = 2
-
 .data
-	strinicial BYTE "----CHAR_RUNNER----", 0 ;título da tela inicial
-	strinstrucao1 BYTE "# Aperte a barra de Espaco para pular os obstaculos",0
-	strinstrucao2 BYTE "_____APERTE ESPACO PARA INICIAR_____",0
-	player BYTE "@" ;jogador
-	obst BYTE "Y" ;obstaculo
-	chao BYTE "." ;caractaer de chão
-	strscore BYTE "MAIOR PONTUAÇÃO", 0
-	score DWORD 0; pontuação
-	stracabou BYTE "GAME OVER", 0
-	velocidade DWORD 500 ;delay
-	player_curr BYTE xmin ;posição atual do player	
+	strinicial		BYTE	"----CHAR_RUNNER----", 0 ;título da tela inicial
+	strinstrucao1	BYTE	"# Aperte a barra de Espaco para pular os obstaculos",0
+	strinstrucao2	BYTE	"_____APERTE ESPACO PARA INICIAR_____",0
+	player			BYTE	"@" ;jogador
+	obst			BYTE	"Y" ;obstaculo
+	chao			BYTE	"." ;caractaer de chão
+	strscore		BYTE	"MAIOR PONTUAÇÃO", 0
+	score			DWORD	0; pontuação
+	stracabou		BYTE	"GAME OVER", 0
+	velocidade		DWORD	250 ;delay
+	player_curr		BYTE	xmin ;posição atual do player	
 
 .code
-
 ;----------------------------------------
 ;------------MENU DO JOGO----------------
 	menu PROC
@@ -35,28 +32,27 @@ ymax = 15
 		MOV eax, green ;coloca 'verde' no eax
 		CALL SetTextColor ;pega valor no eax e "setta" a cor das letras
 
+		;Escreve "CharRunner"
 		MOV dl, xmin+15 ;posição x do cursor
 		MOV dh, ymin ;posição y inicial do cursor
 		CALL Gotoxy ; coloca o cursor em dl,dh
-
 		MOV edx, OFFSET strinicial
 		CALL WriteString
 		MOV al, 10 ;10 é o "código" para o caractere "próxima linha"
 		CALL WriteChar
 
+		;Escreve "#Aperte..."
 		MOV dl, xmin ;posição x do cursor
 		MOV dh, ymin+1 ;posição y inicial do cursor
 		CALL Gotoxy ; coloca o cursor em dl,dh
-
 		MOV edx, OFFSET strinstrucao1
-		CALL Gotoxy
 		CALL WriteString
 		CALL WriteChar
 
+		;Escreve "Aperte espaço para iniciar"
 		MOV dl, xmin+5 ;posição x do cursor
 		MOV dh, ymin+2 ;posição y inicial do cursor
 		CALL Gotoxy ; coloca o cursor em dl,dh
-
 		MOV edx, OFFSET strinstrucao2
 		CALL WriteString
 		CALL WriteChar
@@ -143,6 +139,7 @@ CONTINUA:
 		CALL Gotoxy
 
 ESCREVE:
+		CALL ReadKey
 		CMP al, 32
 		JZ PULO
 C_E:	MOV al, player
@@ -159,7 +156,7 @@ C_E:	MOV al, player
 		INC cl
 		cmp cl,46
 		jnz ESCREVE
-		sub velocidade, 200
+		sub velocidade, 20
 		JMP SAIR_DMJ
 
 PULO:
@@ -205,12 +202,18 @@ rastro ENDP
 	main PROC
 
 		CALL menu
-
+	
 		CALL ClrScr
-		;MOV al, stracabou
-		;CALL WriteString
-		;MOV al, 10
-		;CALL WriteChar
+
+		MOV dl, [xmin+15]
+		MOV dh, [ymin+2]
+		CALL Gotoxy		
+		MOV edx, OFFSET stracabou
+		CALL WriteString
+
+		MOV dl, xmin
+		MOV dh, ymin + 4
+		CALL Gotoxy
 
 		exit
 
