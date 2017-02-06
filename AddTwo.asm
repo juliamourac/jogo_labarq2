@@ -21,16 +21,14 @@ ymax = 15
 	chao BYTE "." ;caractaer de chão
 	strscore BYTE "MAIOR PONTUAÇÃO", 0
 	score DWORD 0; pontuação
-	stracabou BYTE "Game Over!", 0
-	x_player BYTE ? ;fixo, sempre no mesmo x
-	y_player BYTE ? ;variável, pois pode pular
-	x_chao BYTE ? ;variável
-	y_chao equ ? ;fixo
-	velocidade DWORD 100
-	msg BYTE "E espaco",0
+	stracabou BYTE "GAME OVER", 0
+	velocidade DWORD 500 ;delay
+	player_curr BYTE xmin ;posição atual do player	
 
 .code
-	
+
+;----------------------------------------
+;------------MENU DO JOGO----------------
 	menu PROC
 		CALL ClrScr ;limpa a tela
 
@@ -73,15 +71,17 @@ ymax = 15
 		jnz LE1
 
 	ESPACO:
-		MOV edx, OFFSET msg
-		CALL WriteString
 		MOV al, 10
 		CALL WriteChar
 		CALL jogo
 		ret
 	menu ENDP
+;----------------------------FIM DO MENU DO JOGO-----------------------------------
+;----------------------------------------------------------------------------------
 
-	jogo PROC
+;-------------------------------------------------
+;----------MÉTODO QUE CUIDA DA PARTIDA------------
+jogo PROC
 		CALL ClrScr
 		MOV dl, xmin+15 ;posição x do cursor
 		MOV dh, ymin ;posição y inicial do cursor
@@ -90,48 +90,129 @@ ymax = 15
 		CALL WriteString
 		MOV al, 10 ;10 é o "código" para o caractere "próxima linha"
 		CALL WriteChar
-		
-SET_CHAO:
+ 
+JOJO:
+		CALL draw_chao ;aqui chama o método de desenhar chão
+		CALL dmj ;aqui chama de desenhar e mover player
+		CMP edx,1
+		JNZ JOJO
+
+SAI:
+		ret
+	jogo ENDP
+;---------------------FIM DO MÉTODO DA PARTIDA-------------------
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;-------------------------DESENHA O CHÃO-------------------------
+	draw_chao PROC
+SET_CHAO: ;zera contador que define até onde desenha, define início do cursor e alimenta o random
 		MOV cl,0 ;atuará como contador
-		MOV dl, xmin ;;xmin no x destino do cursor
+		MOV dl, xmin ;xmin no x destino do cursor
 		MOV dh, ymax
 		CALL Gotoxy
 		CALL Randomize;"Randomiza o seed"
 		
 DESENHA_CHAO:
-		MOV eax, 25;
-		CALL RandomRange ; Define o "range" com o máximo em eax-1
-		cmp eax, 17 ;compara o número gerado com 23, se for aparece "Y"
+		cmp cl, 25 ;se está no meio do campo
 		jne E_CHAO
 		MOV al, obst
 		jmp CONTINUA
 		E_CHAO:
 			MOV al, chao
 
-		CONTINUA:
-			CALL WriteChar
-			MOV eax, 100
-			CALL Delay
-			inc cl
-			cmp cl,50
-			jz SET_CHAO
-			CALL ReadKey
-			cmp al, 32
-			jnz DESENHA_CHAO
-		MOV al,10
+CONTINUA:
 		CALL WriteChar
-		exit
+;		MOV eax, 100
+;		CALL Delay
+		INC cl
+		CMP cl,50
+		jnz DESENHA_CHAO
 
+		ret
+	draw_chao ENDP
+;----------------FIM DO MÉTODO QUE DESENHA O CHÃO------------------------
+;------------------------------------------------------------------------
 
-	jogo ENDP
+;------------------------------------------------------------------------
+;---------------------DESENHA E MOVE O JOGADOR---------------------------
+	dmj PROC
+		MOV cl,0
+		MOV dl, xmin
+		MOV dh, ymax
+		CALL Gotoxy
 
-	
+ESCREVE:
+		CMP al, 32
+		JZ PULO
+C_E:	MOV al, player
+		CALL WriteChar
+		CMP cl, 25
+		JZ COLISAO
+		MOV eax, velocidade
+		CALL Delay
+
+		
+		MOV player_curr, xmin
+		ADD player_curr, cl
+		CALL rastro
+		INC cl
+		cmp cl,46
+		jnz ESCREVE
+		sub velocidade, 200
+		JMP SAIR_DMJ
+
+PULO:
+	MOV player_curr, xmin
+	add cl, 3 ;três posições no campo
+	add player_curr, cl
+	MOV dl, player_curr
+	MOV dh, ymax
+	CALL Gotoxy
+	JMP C_E
+
+SAIR_DMJ:
+		MOV edx, 0
+		ret
+
+COLISAO:
+		MOV edx, 1
+		ret
+
+	dmj ENDP
+;-------------------FIM DE DESENHA E MOVE JOGADOR------------------------
+;------------------------------------------------------------------------
+
+;------------------------------------------------------------------------
+;-------------------MÉTODO QUE DESENHA PONTO ATRÁS-----------------------
+rastro PROC
+	SUB player_curr,1
+	MOV dl, player_curr
+	MOV dh, ymax
+	CALL Gotoxy
+	MOV al, chao
+	CALL WriteChar
+	ADD player_curr,1
+	MOV dl, player_curr
+	CALL Gotoxy
+	ret
+rastro ENDP
+;----------------FIM DO MÉTODO QUE DESENHA PONTO ATRÁS-------------------
+;------------------------------------------------------------------------
+
+;------------------------------------------------------------------------
+;-------------------------------MAIN-------------------------------------
 	main PROC
+
 		CALL menu
+
+		CALL ClrScr
+		;MOV al, stracabou
+		;CALL WriteString
+		;MOV al, 10
+		;CALL WriteChar
 
 		exit
 
 	main ENDP
 	END MAIN
-
-END
